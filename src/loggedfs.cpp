@@ -151,16 +151,21 @@ getcallername(const pid_t pid)
   return ret;
 }
 
-static void loggedfs_log(const char* path,const char* action,const int returncode,const char *format,...)
+static void
+loggedfs_log(const char* path,
+             const char* action,
+             const int returncode,
+             const char *format,
+             ...)
 {
   char *retname = NULL;
   pid_t pid = fuse_get_context()->pid;
   uid_t uid = fuse_get_context()->uid;
 
   if (returncode >= 0)
-    retname = "SUCCESS";
+    retname = (char *)"SUCCESS";
   else
-    retname = "FAILURE";
+    retname = (char *)"FAILURE";
 
   if (config.shouldLog(path, uid, action, retname))
     {
@@ -168,16 +173,16 @@ static void loggedfs_log(const char* path,const char* action,const int returncod
       char buf[1024];
       char *tmpstr = getcallername(pid);
 
-      va_start(args,format);
-      memset(buf,0,1024);
+      va_start(args, format);
+      memset(buf, 0, 1024);
 
-      vsprintf(buf,format,args);
+      vsprintf(buf, format, args);
       strcat(buf," {%s} [ pid = %d %s uid = %d ]");
 
       if (returncode >= 0)
         rLog(Info, buf, retname, pid, config.isPrintProcessNameEnabled() ? tmpstr:"", uid);
       else
-        rError( buf, retname, pid, config.isPrintProcessNameEnabled() ? tmpstr:"", uid);
+        rError(buf, retname, pid, config.isPrintProcessNameEnabled() ? tmpstr:"", uid);
 
       va_end(args);
 
