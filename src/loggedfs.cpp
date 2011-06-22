@@ -108,37 +108,80 @@ static char* getRelativePath(const char* path)
 /*
  * Returns the name of the process which accessed the file system.
  */
-static char* getcallername()
+static char *
+getcallername(const pid_t pid)
 {
-  char filename[100];
-  sprintf(filename,"/proc/%d/cmdline",fuse_get_context()->pid);
-  FILE * proc=fopen(filename,"rt");
+  char filename[100] = "";
   char cmdline[256]="";
-  fread(cmdline,sizeof(cmdline),1,proc);
-  fclose(proc);
-  return strdup(cmdline);
+  FILE *proc = NULL;
+  char *ret = NULL;
+
+  if (! pid)
+    {
+      ret = strdup("");
+      if (! ret)
+        {
+          fprintf(stderr, "strdup(%s): %s\n", cmdline, strerror(errno));
+          exit(EXIT_FAILURE);
+        }
+    }
+  else
+    {
+      snprintf(filename, sizeof filename,"/proc/%d/cmdline", pid);
+
+      proc = fopen(filename,"r");
+      if (! proc)
+        {
+          fprintf(stderr, "fopen(%s): %s\n", filename, strerror(errno));
+          exit(EXIT_FAILURE);
+        }
+
+      (void) fread(cmdline, sizeof cmdline, 1, proc);
+
+      fclose(proc);
+
+      ret = strdup(cmdline);
+      if (! ret)
+        {
+          fprintf(stderr, "strdup(%s): %s\n", cmdline, strerror(errno));
+          exit(EXIT_FAILURE);
+        }
+    }
+
+  return ret;
 }
 
 static void loggedfs_log(const char* path,const char* action,const int returncode,const char *format,...)
 {
-  char *retname;
+  char *retname = NULL;
+  pid_t pid = fuse_get_context()->pid;
+  uid_t uid = fuse_get_context()->uid;
+
   if (returncode >= 0)
     retname = "SUCCESS";
   else
     retname = "FAILURE";
-  if (config.shouldLog(path,fuse_get_context()->uid,action,retname))
+
+  if (config.shouldLog(path, uid, action, retname))
     {
       va_list args;
       char buf[1024];
+      char *tmpstr = getcallername(pid);
+
       va_start(args,format);
       memset(buf,0,1024);
+
       vsprintf(buf,format,args);
       strcat(buf," {%s} [ pid = %d %s uid = %d ]");
+
       if (returncode >= 0)
-        rLog(Info, buf,retname, fuse_get_context()->pid,config.isPrintProcessNameEnabled()?getcallername():"", fuse_get_context()->uid);
+        rLog(Info, buf, retname, pid, config.isPrintProcessNameEnabled() ? tmpstr:"", uid);
       else
-        rError( buf,retname, fuse_get_context()->pid,config.isPrintProcessNameEnabled()?getcallername():"", fuse_get_context()->uid);
+        rError( buf, retname, pid, config.isPrintProcessNameEnabled() ? tmpstr:"", uid);
+
       va_end(args);
+
+      free(tmpstr);
     }
 }
 
@@ -564,21 +607,31 @@ static int loggedFS_statfs(const char *path, struct statvfs *stbuf)
   return 0;
 }
 
-static int loggedFS_release(const char *path, struct fuse_file_info *fi)
+static int
+loggedFS_release(const char *path,
+                 struct fuse_file_info *fi)
 {
-  char *aPath = getAbsolutePath(path);
+  (void) fi;
 
-  loggedfs_log(aPath, "release", 0, "release %s", aPath);
-  return 0;
+  int res = 0;
+
+  loggedfs_log(path, "release", res, "release %s", path);
+
+  return res;
 }
 
-static int loggedFS_fsync(const char *path, int isdatasync,
-                          struct fuse_file_info *fi)
+static int
+loggedFS_fsync(const char *path,
+               int isdatasync,
+               struct fuse_file_info *fi)
 {
-  char *aPath = getAbsolutePath(path);
+  (void) fi;
 
-  loggedfs_log(aPath, "fsync", 0, "fsync %s (isdatasync=%d)", aPath, isdatasync);
-  return 0;
+  int res = 0;
+
+  loggedfs_log(path, "release", res, "release %s isdatasync=%d", path, isdatasync);
+
+  return res;
 }
 
 #ifdef HAVE_SETXATTR
