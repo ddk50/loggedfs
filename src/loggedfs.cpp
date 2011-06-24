@@ -634,7 +634,7 @@ loggedFS_fsync(const char *path,
 
   int res = 0;
 
-  loggedfs_log(path, "release", res, "release %s isdatasync=%d", path, isdatasync);
+  loggedfs_log(path, "fsync", res, "fsync %s isdatasync=%d", path, isdatasync);
 
   return res;
 }
