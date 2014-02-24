@@ -130,10 +130,18 @@ getcallername(const pid_t pid)
       snprintf(filename, sizeof filename,"/proc/%d/cmdline", pid);
 
       proc = fopen(filename,"r");
-      if (! proc)
+      if (!proc)
         {
-          fprintf(stderr, "fopen(%s): %s\n", filename, strerror(errno));
-          exit(EXIT_FAILURE);
+          fprintf(stderr, "fopen(%s): %s\n", filename, strerror(errno));	  
+	  //          exit(EXIT_FAILURE);
+	  snprintf(cmdline, sizeof cmdline, "%d <unknown>\n", pid);
+	  ret = strdup(cmdline);
+	  if (! ret)
+	    {
+	      fprintf(stderr, "strdup(%s): %s\n", cmdline, strerror(errno));
+	      exit(EXIT_FAILURE);
+	    }
+	  return ret;
         }
 
       (void) fread(cmdline, sizeof cmdline, 1, proc);
@@ -688,7 +696,7 @@ static
 bool processArgs(int argc, char *argv[], LoggedFS_Args *out)
 {
   // set defaults
-  out->isDaemon = true;
+  out->isDaemon = false;
 
   out->fuseArgc = 0;
   out->configFilename=NULL;
