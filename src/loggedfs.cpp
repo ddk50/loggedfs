@@ -2,6 +2,7 @@
  * Author:   Remi Flament <rflament at laposte dot net>
  *****************************************************************************
  * Copyright (c) 2005 - 2008, Remi Flament
+ *                            few additions by Kazushi Takahashi
  *
  * This library is free software; you can distribute it and/or modify it under
  * the terms of the GNU General Public License (GPL), as published by the Free
