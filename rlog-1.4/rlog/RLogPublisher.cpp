@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h> // in case we need memcpy
+#include <sys/time.h>
 
 using namespace rlog;
 
@@ -132,7 +133,8 @@ void RLogPublisher::PublishVA( PublishLoc *loc, RLogChannel *,
     RLogData data;
 
     data.publisher = loc;
-    data.time = time(0);
+    gettimeofday(&data.time, NULL);
+    //    data.time = time(0);
     data.msg = 0;
 
     char msgBuf[64];

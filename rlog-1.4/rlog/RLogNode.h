@@ -48,9 +48,10 @@ namespace rlog
     {
 	struct PublishLoc *publisher;
 	//! time of publication
-	time_t time;
+	timeval time;
+	// time_t time;
 	//! formatted msg - gets destroyed when publish() call returns.
-	const char *msg; 
+	const char *msg;
 
 	// track which nodes have seen this message, to avoid getting
 	// duplicates.  It would be nice if we could enforce this via the node

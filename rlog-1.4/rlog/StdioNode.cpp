@@ -42,6 +42,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 #ifdef _WIN32
 #  include <io.h>
@@ -157,23 +158,23 @@ void
 StdioNode::publish( const RLogData &data )
 {
     char timeStamp[32];
-    time_t errTime = data.time;
-    tm currentTime;
+    struct tm currentTime;
    
 #ifdef HAVE_LOCALTIME_R
-    localtime_r( &errTime, &currentTime );
+    localtime_r( &data.time.tv_sec, &currentTime );
 #else
-    currentTime = *localtime( &errTime );
+    currentTime = *localtime( &data.time.tv_sec );
 #endif
 
     const char *color = NULL;
     if(colorize)
     {
-	sprintf(timeStamp, "%s%02i:%02i:%02i%s ",
+	sprintf(timeStamp, "%s%02i:%02i:%02i.%03ld%s ",
 		kGreenColor,
 		currentTime.tm_hour,
 		currentTime.tm_min,
 		currentTime.tm_sec,
+		data.time.tv_usec / 1000,
 		kNormalColor);
     
 	string channel = data.publisher->channel->name();
@@ -196,10 +197,11 @@ StdioNode::publish( const RLogData &data )
 	}
     } else
     {
-	sprintf(timeStamp, "%02i:%02i:%02i ",
+	sprintf(timeStamp, "%02i:%02i:%02i.%03ld ",
 		currentTime.tm_hour,
 		currentTime.tm_min,
-		currentTime.tm_sec);
+		currentTime.tm_sec,
+		data.time.tv_sec / 1000);
     }
 
 #ifdef USE_STRSTREAM
